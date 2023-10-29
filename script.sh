@@ -7,7 +7,7 @@ sudo apt update -y
 sudo apt install temurin-17-jdk -y
 /usr/bin/java --version
 
-
+sqp_45e8752e2f0636f18b67629a2243b9cc5a4e0c05
 # Install Trivy
 sudo apt-get install wget apt-transport-https gnupg lsb-release -y
 wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
