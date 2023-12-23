@@ -1,5 +1,10 @@
 name: Build,Analyze,scan
 
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   build-analyze-scan:
     name: Build
