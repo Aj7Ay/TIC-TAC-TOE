@@ -55,7 +55,12 @@ jobs:
 
       - name: Image scan
         run: trivy image madmaxdocker/tic-tac-toe:latest > trivyimagedeploy.txt  
-  
+
+      - name: Deploy to container
+        run: | 
+          docker stop game
+          docker rm game  
+      
       - name: Deploy to container
         run: docker run -d --name game -p 3000:3000 madmaxdocker/tic-tac-toe:latest
         
