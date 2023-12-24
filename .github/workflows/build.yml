@@ -47,7 +47,7 @@ jobs:
         run: trivy image madmaxdocker/tic-tac-toe:latest > trivyimage.txt
 
   deploy:
-   needs: build-analyze-scan   
+   needs: Build   
    runs-on: [self-hosted]
    steps:
       - name: docker pull image
