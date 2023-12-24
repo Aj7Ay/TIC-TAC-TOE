@@ -1,0 +1,73 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+
+
+jobs:
+  build:
+    name: Build
+    runs-on: [Linux]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+       #If you wish to fail your job when the Quality Gate is red, uncomment the
+       #following lines. This would typically be used to fail a deployment.
+      #- uses: sonarsource/sonarqube-quality-gate-action@master
+      #  timeout-minutes: 5
+       # env:
+        #  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: NPM Install
+        run: npm install # Add your specific npm install command
+
+      - name: Install Trivy
+        run: |
+          # Scanning files
+          trivy fs . > trivyfs.txt
+
+      - name: Docker build and push
+        run: |
+          # Run commands to build and push Docker images
+          docker build -t tic-tac-toe .
+          docker tag tic-tac-toe madmaxdocker/tic-tac-toe:latest
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+          docker push madmaxdocker/tic-tac-toe:latest
+        env:
+          DOCKER_CLI_ACI: 1
+
+      - name: Image scan
+        run: trivy image madmaxdocker/tic-tac-toe:latest > trivyimage.txt
+
+  deploy:
+   needs: Build   
+   runs-on: [self-hosted]
+   steps:
+      - name: docker pull image
+        run: docker pull madmaxdocker/tic-tac-toe:latest
+
+      - name: Image scan
+        run: trivy image madmaxdocker/tic-tac-toe:latest > trivyimagedeploy.txt  
+
+      - name: Deploy to container
+        run: | 
+          docker stop game
+          docker rm game  
+      
+      - name: Deploy to container
+        run: docker run -d --name game -p 3000:3000 madmaxdocker/tic-tac-toe:latest
+        
+      - name: Update kubeconfig
+        run: aws eks --region us-east-1 update-kubeconfig --name EKS_CLOUD
+
+      - name: Deploy to kubernetes
+        run: kubectl apply -f deployment-service.yml
+
+
